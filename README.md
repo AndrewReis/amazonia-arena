@@ -1,3 +1,6 @@
+# Amaonia Arena (back-end)
+**Inspirado no jogo Naruto Arena, este projeto visa reproduzir as principais funcionalidades desse renomado jogo.**
+---
 # Tela principal
 ## Requisitos Funcionais
 - [ ] Deve ser possível se cadastrar;
