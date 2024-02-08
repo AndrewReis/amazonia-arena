@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-
-// libs
-import bcrypt from 'bcrypt';
+import crypto from 'node:crypto';
 
 // use-cases
 import { CreateUserUseCase } from '@/api/use-cases/users/_create';
@@ -12,14 +10,22 @@ describe('#Create User Use-cases', () => {
 	let createUserUseCase: CreateUserUseCase;
 	let fakeUsersRepository: FakeUsersRepository;
 
-	const MOCK_PASSWORD_HASHED = 'adhjkashdjkash';
+	const MOCK_ID_USER_UUID    = 'dsdsdsds-gfdgdfgfdg-bvcbcvbc-rwerwerw-kghkghkgh';
+	const MOCK_PASSWORD_HASHED = 'myfakehash';
 
 	beforeEach(() => {
 		fakeUsersRepository = new FakeUsersRepository();
 		createUserUseCase = new CreateUserUseCase(fakeUsersRepository);
+
+		vi.spyOn(crypto, 'randomUUID').mockReturnValue(MOCK_ID_USER_UUID);
+
+		vi.spyOn(crypto, 'createHash').mockReturnValue<any>({
+			update: vi.fn().mockReturnThis(),
+			digest: vi.fn().mockReturnValue(MOCK_PASSWORD_HASHED)
+		});
 	});
 
-	it('should generate hash for password user', async () => {
+	it('should create a new user with encrypted password', async () => {
 		// arrange
 		const mockUser = {
 			nickname: 'joedoe-123',
@@ -27,16 +33,29 @@ describe('#Create User Use-cases', () => {
 			password: '123456'
 		};
 
-		
-		// vi.spyOn(bcrypt, 'hash').mockResolvedValue(MOCK_PASSWORD_HASHED);
-
 		//act
 		const response = await createUserUseCase.execute(mockUser);
 
 		// assert
-		console.log(response.user);
+		expect(crypto.createHash).toHaveBeenCalledWith('sha256');
+		expect(response.user.id).toEqual(MOCK_ID_USER_UUID);
+		expect(response.user.password).toEqual(MOCK_PASSWORD_HASHED);
+	});
+
+	it('should not create a new user if Email already used', async () => {
+		// arrange
+		const mockUser = {
+			nickname: 'joedoe-123',
+			email: 'joedoe@test.com',
+			password: '123456'
+		};
+
+		//act
+		await createUserUseCase.execute(mockUser);
+
+		// assert
+		expect(async () => {
+			await createUserUseCase.execute(mockUser);
+		}).rejects.toBeInstanceOf(Error);
 	});
 });
-// $2b$06$miMtlEveUdHGV/uPb0teOeejDOucXt2d9ahSkr4RU0MeBKfi2nfIa
-
-// $2b$06$1kdvwv28ZDH2iV1OW3znCeTuCtGHMTvXLBKK1fSUQBUt07pDCTU22

@@ -1,6 +1,5 @@
+import crypto from 'node:crypto';
 import { IUsersRepository } from '@/api/repositories/users/users-repository';
-
-import * as bcrypt from 'bcrypt';
 
 type Request = {
 	nickname: string;
@@ -19,7 +18,10 @@ export class CreateUserUseCase {
 		const checkUserExist = await this.usersRepository.findByEmail(email);
 
 		if (!checkUserExist) {
-			const passwordHashed = await bcrypt.hash(password, 6);
+			const algorithmHash = crypto.createHash('sha256');
+			algorithmHash.update(password);
+			const passwordHashed = algorithmHash.digest('hex');
+
 			const user = await this.usersRepository.create({nickname, email, password: passwordHashed});
 
 			return {
